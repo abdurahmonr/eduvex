@@ -5,3 +5,4 @@ export * from './components/Badge.jsx';
 export * from './components/StatusBanner.jsx';
 export * from './components/PortalHeader.jsx';
 export * from './components/PortalLayout.jsx';
+export * from './components/NotFoundView.jsx';

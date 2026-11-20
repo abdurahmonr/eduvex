@@ -3,6 +3,7 @@ import { formatUZS, parseCurrency } from '../src/currency.js';
 import { formatDate } from '../src/dates.js';
 import { formatUzPhone, isValidUzPhone } from '../src/phone.js';
 import { isValidEmail } from '../src/validation.js';
+import { AppError, formatErrorMessage, isNetworkError } from '../src/errors.js';
 
 describe('@education-erp/shared-utils', () => {
   describe('currency', () => {
@@ -45,6 +46,22 @@ describe('@education-erp/shared-utils', () => {
       expect(isValidEmail('director@example.uz')).toBe(true);
       expect(isValidEmail('invalid-email')).toBe(false);
       expect(isValidEmail('')).toBe(false);
+    });
+  });
+
+  describe('errors', () => {
+    it('creates and formats AppError objects', () => {
+      const err = new AppError('Unauthorized access', 'AUTH_ERROR', 403);
+      expect(err.name).toBe('AppError');
+      expect(err.code).toBe('AUTH_ERROR');
+      expect(formatErrorMessage(err)).toBe('Unauthorized access');
+      expect(formatErrorMessage('Direct string error')).toBe('Direct string error');
+      expect(formatErrorMessage(null)).toBe('An unknown error occurred.');
+    });
+
+    it('detects network failure errors', () => {
+      expect(isNetworkError(new Error('Failed to fetch resource'))).toBe(true);
+      expect(isNetworkError(new Error('Validation failed'))).toBe(false);
     });
   });
 });

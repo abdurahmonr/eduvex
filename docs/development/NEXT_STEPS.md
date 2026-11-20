@@ -1,56 +1,56 @@
-# Next Steps: Preparing for Phase 02
+# Next Steps: Preparing for Phase 03
 
-## 1. Current Milestone Achieved (Phase 01)
+## 1. Current Milestone Achieved (Phase 02: System Architecture)
 
-The Phase 01 Technical Foundation is **100% complete**:
-- [x] Monorepo structure initialized with npm Workspaces.
-- [x] Five independent React + Vite applications operational.
-- [x] Four shared packages configured and consumed as raw ESM.
-- [x] All five portals independently buildable (`npm run build`).
-- [x] Unit test suites passing via Vitest (`npm test`).
-- [x] Subdomain and shared backend architecture established.
-- [x] Full documentation suite authored.
-
----
-
-## 2. Action Items for Phase 02 (Core Schema, Auth & Operations)
-
-When approved by leadership, Phase 02 should proceed with the following sequential tasks:
-
-### Task 2.1: Supabase Database Migration
-1. Initialize local Supabase CLI or cloud project instance.
-2. Execute initial schema migration creating:
-   - `institutions`, `branches`, `profiles`, `user_roles`
-   - `courses`, `groups`, `group_students`
-   - `invoices`, `payments`
-   - `lessons`, `attendance`, `grades`
-   - `parent_students`
-3. Apply Row Level Security (RLS) policies defining access rights for all five roles.
-
-### Task 2.2: Live Supabase Authentication Integration
-1. Implement email/password and magic link sign-in flows in `shared-auth`.
-2. Add cross-subdomain authentication cookie persistence for `.example.uz`.
-3. Create role-based route guard components (`ProtectedRoute`, `RoleGuard`) to redirect unauthenticated or unauthorized users to their correct portal.
-
-### Task 2.3: Admin Portal Operational Core
-1. Implement CRM Lead Pipeline (Kanban board for inbound leads).
-2. Implement Student Registration modal with parent phone linkage.
-3. Implement Group creation with teacher assignment and timetable selection.
-4. Implement Cashier module for recording tuition fee payments.
-
-### Task 2.4: Teacher Journal & Attendance
-1. Connect Teacher Portal to active group rosters via Supabase queries.
-2. Build interactive attendance journal with Present/Absent/Excused/Late toggles.
-3. Build homework and test score submission interface.
-
-### Task 2.5: Student & Parent Live Views
-1. Build personal student timetable and payment balance screen.
-2. Build parent child-switcher and attendance notification feed.
+The Phase 02 System Architecture is **100% complete and documented**:
+- [x] Complete system architecture designed and formalized.
+- [x] All 12 architecture specification documents authored under `docs/architecture/`.
+- [x] All 5 Architecture Decision Records authored under `docs/decisions/` (ADR-004 to ADR-008).
+- [x] Data flow sequence diagrams and system topology diagrams verified.
+- [x] Hybrid RBAC + PBAC authorization model established (no Accountant role).
+- [x] Multi-tenancy, RLS policies, and immutable audit logging planned.
+- [x] Static edge deployment model for independent subdomains documented.
 
 ---
 
-## 3. Strict Reminders for Phase 02 Developers
+## 2. Action Items for Phase 03: Database Design & Schema Execution
 
-1. **NO Accountant Portal**: Keep all cashiering in the Admin Portal and financial oversight in the Director Portal.
-2. **Never expose `SUPABASE_SERVICE_ROLE_KEY`** in frontend code.
-3. Maintain pure ES Modules JavaScript (no TypeScript).
+When approved by leadership, Phase 03 will execute the database modeling based on the Phase 02 architecture:
+
+### Task 3.1: Supabase PostgreSQL Schema Modeling
+1. Create `supabase/migrations/` structure.
+2. Author SQL migration files defining:
+   - **Multi-Tenant Base**: `institutions`, `branches`.
+   - **Identity & Roles**: `profiles`, `user_roles`, `admin_permissions`.
+   - **Academic Structures**: `courses`, `classrooms`, `groups`, `group_students`.
+   - **Instruction & Lessons**: `lessons`, `attendance`, `grades`.
+   - **Financial Ledgers**: `tariffs`, `invoices`, `payments`, `student_balances`.
+   - **Family Linkage**: `parent_students`.
+   - **Governance & Audit**: `audit_logs`.
+
+### Task 3.2: Row Level Security (RLS) Implementation
+1. Enable RLS on 100% of public tables.
+2. Author explicit RLS policies for each role:
+   - Director policies (institutional oversight, audit logs).
+   - Admin policies (operations, cashiering conditional on `finance:cashier`).
+   - Teacher policies (strictly assigned groups and lessons).
+   - Student policies (strictly own academic and financial records).
+   - Parent policies (strictly linked children records via `parent_students`).
+
+### Task 3.3: Database Stored Procedures & Triggers
+1. Implement `sync_user_claims_to_jwt()` trigger to keep `app_metadata` updated.
+2. Implement `log_table_mutation()` trigger for append-only writes to `audit_logs`.
+3. Implement `process_tuition_payment()` RPC function for atomic cashier transactions.
+4. Implement `enroll_student_in_cohort()` RPC function with capacity checking.
+
+### Task 3.4: Database Seeding & Testing
+1. Author `supabase/seed.sql` with representative test data for all five roles.
+2. Validate RLS policies against unauthorized role token simulation.
+
+---
+
+## 3. Strict Development Rules for Phase 03
+
+1. **Pure JavaScript**: Maintain client applications strictly in React + Vite + pure ESM JavaScript (no TypeScript).
+2. **No Accountant Portal**: All cashiering remains in Admin, financial oversight in Director.
+3. **No Service Key**: Never expose `SUPABASE_SERVICE_ROLE_KEY` in frontend code.

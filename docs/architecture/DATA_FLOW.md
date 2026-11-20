@@ -64,7 +64,8 @@ sequenceDiagram
     TchApp->>TchSvc: recordAttendance(lessonId, records)
     TchSvc->>Supa: client.from('attendance').upsert(records)
     Supa->>DB: INSERT / UPDATE public.attendance
-    DB-->>Supa: Write confirmed & WAL Change Event emitted
+    DB-->>Supa: Write confirmed (AFTER INSERT/UPDATE trigger logs mutation to audit_logs)
+    DB-->>Supa: WAL Change Event emitted to Realtime channel
 
     Supa->>ParApp: Realtime WebSocket Broadcast (CDC Event)
     ParApp->>ParApp: Verifies student_id matches linked children
@@ -95,11 +96,11 @@ sequenceDiagram
     
     Note over RPC,DB: Atomic Multi-Table Transaction
     RPC->>DB: BEGIN TRANSACTION
-    RPC->>DB: Validates admin holds 'finance:cashier' permission
+    RPC->>DB: Validates admin holds 'finance:cashier' permission in JWT claims
     RPC->>DB: INSERT INTO public.payments (amount=1500000, method='card', cashier_id)
+    Note over DB: Database AFTER INSERT trigger automatically writes to public.audit_logs
     RPC->>DB: UPDATE public.invoices SET status='paid', paid_at=NOW()
     RPC->>DB: UPDATE public.student_balances SET balance = balance + 1500000
-    RPC->>DB: INSERT INTO public.audit_logs (action='RECORD_PAYMENT', actor=admin_id)
     RPC->>DB: COMMIT TRANSACTION
     DB-->>RPC: Transaction Success (Receipt #REC-2026-904)
     RPC-->>App: Payment successful! Prints receipt.

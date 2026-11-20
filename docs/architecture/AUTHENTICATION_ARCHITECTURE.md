@@ -23,12 +23,12 @@ sequenceDiagram
     participant App as React Portal (e.g. admin.example.uz)
     participant Auth as Supabase Auth (GoTrue)
     participant Trigger as Postgres Sync Trigger
-    participant DB as Postgres (user_roles table)
+    participant DB as Postgres (user_roles & admin_permissions)
 
     User->>App: Submits login credentials (email & password)
     App->>Auth: client.auth.signInWithPassword({ email, password })
     Auth->>Auth: Validates password hash (bcrypt / argon2)
-    Trigger-->>Auth: Injects app_metadata { role, institution_id, permissions } from user_roles
+    Trigger-->>Auth: Aggregates role from user_roles + permissions from admin_permissions -> raw_app_meta_data
     Auth-->>App: Returns Session { access_token (JWT), refresh_token, user }
     
     alt In Production (*.example.uz)
@@ -49,10 +49,13 @@ sequenceDiagram
 
 ## 3. Custom JWT Claims Architecture
 
-To eliminate the need for every client page load and RLS query to join against `public.user_roles`, the database uses an automated **Claims Sync Trigger**:
+To eliminate the need for every client page load and RLS query to join against `public.user_roles` and `public.admin_permissions`, the database uses an automated **Claims Sync Trigger**:
 
 ### Trigger Mechanism:
-1. When a user's role or institution is created or modified in `public.user_roles`, a PostgreSQL trigger updates `auth.users.raw_app_meta_data`.
+1. When a user's role or institution is created or modified in `public.user_roles`, or permissions are updated in `public.admin_permissions`, a PostgreSQL trigger executes:
+   - Reads base role from `public.user_roles`.
+   - Aggregates any custom permissions from `public.admin_permissions` for admin users.
+   - Updates `auth.users.raw_app_meta_data`.
 2. When the user signs in or refreshes their token, Supabase Auth embeds this data into the JWT payload:
 
 ```json
@@ -73,7 +76,7 @@ To eliminate the need for every client page load and RLS query to join against `
 
 ### Architectural Advantages:
 - **Instant Client Routing**: Client route guards evaluate `user.app_metadata.role` instantly without an initial database fetch.
-- **High-Performance RLS**: PostgreSQL evaluates `(auth.jwt() -> 'app_metadata' ->> 'role')` in microseconds without executing table joins.
+- **High-Performance RLS**: PostgreSQL evaluates `(auth.jwt() -> 'app_metadata' ->> 'role')` and `(auth.jwt() -> 'app_metadata' -> 'permissions') ? 'finance:cashier'` in microseconds without executing table joins.
 
 ---
 

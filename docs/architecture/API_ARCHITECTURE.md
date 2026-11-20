@@ -89,7 +89,7 @@ export const attendanceService = {
         .eq('lesson_id', lessonId);
 
       if (error) {
-        throw new AppError(error.message, error.code, 400);
+        return { data: null, error: formatErrorMessage(error) };
       }
 
       return { data, error: null };

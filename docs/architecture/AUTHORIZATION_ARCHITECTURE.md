@@ -15,13 +15,13 @@ flowchart TD
     end
 
     subgraph Layer2["Layer 2: Fine-Grained PBAC (Operational Capabilities)"]
-        PermTokens["Permission Tokens\n(finance:cashier, finance:reports, academics:manage)"]
+        PermTokens["Permission Tokens in JWT Claims\n(finance:cashier, finance:reports, academics:manage)"]
         ActionCheck["Sensitive Action Validation"]
         PermTokens --> ActionCheck
     end
 
-    subgraph Layer3["Layer 3: Kernel-Level RLS (Database Enforcement)"]
-        RLS["PostgreSQL Row Level Security\nUSING (...) WITH CHECK (...)"]
+    subgraph Layer3["Layer 3: Kernel-Level RLS (Zero-Query Database Enforcement)"]
+        RLS["PostgreSQL Row Level Security\nauth.jwt() -> 'app_metadata' -> 'permissions'"]
     end
 
     PortalGate --> ActionCheck
@@ -91,24 +91,24 @@ flowchart LR
     AdminA["Admin A: Lead Receptionist\n(Holds crm:manage_leads & students:register)"]
     AdminB["Admin B: Campus Cashier\n(Holds finance:cashier & students:register)"]
 
-    Director -->|Grants finance:cashier| AdminB
+    Director -->|Grants finance:cashier in public.admin_permissions| AdminB
     Director -.->|Denies finance:cashier| AdminA
 ```
 
-- When Director provisions an Administrator, they can toggle the `finance:cashier` and `finance:view_reports` permissions.
-- In PostgreSQL, the `payments` and `invoices` tables check:
+- When Director provisions an Administrator, they can toggle the `finance:cashier` and `finance:view_reports` permissions in `public.admin_permissions`.
+- A database trigger synchronizes assigned permissions directly into the user's JWT `app_metadata.permissions` array.
+- In PostgreSQL, the `payments` and `invoices` tables check the claims directly in memory with **zero database subqueries**:
   ```sql
   CREATE POLICY admin_insert_payment ON public.payments
   FOR INSERT
   WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM public.admin_permissions ap
-      WHERE ap.user_id = auth.uid()
-        AND ap.permission = 'finance:cashier'
-    )
+    -- Direct in-memory JSONB claim evaluation: sub-microsecond performance
+    (auth.jwt() -> 'app_metadata' -> 'permissions')::jsonb ? 'finance:cashier'
+    OR
+    (auth.jwt() -> 'app_metadata' ->> 'role') = 'director'
   );
   ```
-- If an admin lacks `finance:cashier`, the Cashier tab in the Admin Portal is hidden in the UI, and any direct API write is rejected by PostgreSQL.
+- If an admin lacks `finance:cashier`, the Cashier tab in the Admin Portal is hidden in the UI, and any direct API write is rejected by PostgreSQL kernel-level RLS.
 
 ---
 

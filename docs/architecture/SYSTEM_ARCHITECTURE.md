@@ -164,3 +164,24 @@ sequenceDiagram
   Every RLS policy begins with a tenant verification check:
   `institution_id = (auth.jwt() -> 'app_metadata' ->> 'institution_id')::uuid`.
   This guarantees that even in multi-branch setups, data isolation is enforced at the database kernel level with near-zero performance overhead.
+
+---
+
+## 7. Consolidated Data Ownership Models
+
+To ensure strict data boundaries across the five portals, entity ownership is structured into explicit domains:
+
+1. **User Identity & Profiles (1:1 with auth.users)**:
+   - `public.profiles` is linked 1:1 with `auth.users.id`.
+   - Users possess exactly one active profile, with role membership defined in `public.user_roles`.
+2. **Academic Cohorts (Owned by Institution & Branch)**:
+   - Groups (`public.groups`) are created by Administrators, linked to an approved Course and Branch, and assigned exactly one primary Teacher (`teacher_id`).
+   - Students link to groups through the `public.group_students` enrollment junction.
+3. **Instructional Records (Linked to Lesson & Instructor)**:
+   - Individual class sessions (`public.lessons`) belong to a group cohort.
+   - Attendance (`public.attendance`) and Grades (`public.grades`) records reference a specific `lesson_id` and `student_id`. Only the assigned group teacher holds write privileges.
+4. **Financial Ledgers (Linked to Student & Cashier)**:
+   - Tuition Invoices (`public.invoices`) are billed to a specific student profile.
+   - Payments (`public.payments`) record the settled invoice, payment method, amount, and the Administrator (`cashier_id`) who collected the funds.
+5. **Family Relationships (Parent-to-Student Linkage)**:
+   - `public.parent_students` defines authoritative parent/guardian links to student accounts, enabling parents to monitor only their verified dependents.

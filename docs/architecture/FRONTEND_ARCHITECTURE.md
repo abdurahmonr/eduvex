@@ -130,7 +130,9 @@ export const studentService = {
       }
 
       const { data, error } = await query;
-      if (error) throw new AppError(error.message, error.code, 400);
+      if (error) {
+        return { data: null, error: formatErrorMessage(error) };
+      }
 
       return { data, error: null };
     } catch (err) {

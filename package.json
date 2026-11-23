@@ -1,44 +1,17 @@
 {
-  "name": "education-erp",
+  "name": "edcrm-ecosystem",
   "version": "1.0.0",
-  "private": true,
-  "description": "Professional Education Center ERP + CRM Platform - Multi-Portal Architecture",
-  "workspaces": [
-    "packages/*",
-    "apps/*"
-  ],
+  "description": "O'quv markazi ekotizimi: sayt.uz (landing), admin.sayt.uz (ERP/CRM), direktor.sayt.uz (direktor), ustoz.sayt.uz (o'qituvchi)",
   "scripts": {
-    "dev": "npm run dev:director",
-    "dev:all": "concurrently -n \"director,admin,teacher,student,parent\" -c \"blue,green,yellow,magenta,cyan\" \"npm run dev:director\" \"npm run dev:admin\" \"npm run dev:teacher\" \"npm run dev:student\" \"npm run dev:parent\"",
-    "dev:director": "npm run dev -w @education-erp/director",
-    "dev:admin": "npm run dev -w @education-erp/admin",
-    "dev:teacher": "npm run dev -w @education-erp/teacher",
-    "dev:student": "npm run dev -w @education-erp/student",
-    "dev:parent": "npm run dev -w @education-erp/parent",
-    "build": "npm run build --workspaces --if-present",
-    "build:director": "npm run build -w @education-erp/director",
-    "build:admin": "npm run build -w @education-erp/admin",
-    "build:teacher": "npm run build -w @education-erp/teacher",
-    "build:student": "npm run build -w @education-erp/student",
-    "build:parent": "npm run build -w @education-erp/parent",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "lint": "node -e \"console.log('Linting passed: All applications and packages conform to pure ES Modules.')\""
+    "dev": "node dev.js",
+    "start": "node dev.js",
+    "landing": "cd landing && npm run dev",
+    "admin": "cd admin && npm run dev",
+    "director": "cd director && npm run dev",
+    "teacher": "cd teacher && npm run dev",
+    "build:all": "cd landing && npm run build && cd ../admin && npm run build && cd ../director && npm run build && cd ../teacher && npm run build"
   },
-  "devDependencies": {
-    "@vitejs/plugin-react": "^4.3.4",
-    "autoprefixer": "^10.4.20",
-    "concurrently": "^9.1.2",
-    "postcss": "^8.5.3",
-    "tailwindcss": "^3.4.17",
-    "vite": "^6.2.0",
-    "vitest": "^3.0.7"
-  },
-  "dependencies": {
-    "@supabase/supabase-js": "^2.49.1",
-    "lucide-react": "^0.475.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-router-dom": "^6.29.0"
-  }
+  "keywords": ["study-center", "crm", "erp", "supabase", "react", "subdomains", "teachers"],
+  "author": "",
+  "license": "ISC"
 }

@@ -1,119 +1,71 @@
-# Education Center ERP + CRM
+# O'quv Markazi ERP / CRM (2-Bosqich — To'liq Supabase)
 
-A modern, enterprise-grade Education Center Management Platform designed for tutoring academies, language schools, and training institutions. 
-
-Built with **React**, **Vite**, **JavaScript (ES Modules)**, **Tailwind CSS**, and **Supabase (PostgreSQL)** using an **npm Workspaces Monorepo** and a **Five-Portal Architecture**.
+Loyiha to'liq **Supabase bulutli bazasiga** o'tkazildi, barcha eski backend kodlari va vaqtinchalik (mock) ma'lumotlar olib tashlandi. Tizim to'liq **O'zbek tilida**, minimalist va tushunarli interfeysda ishlaydi.
 
 ---
 
-## 🏛️ Architecture Overview
+## 🌐 Mustaqil Ilovalar va Portlar
 
-The system isolates operations, teaching, executive oversight, and family communications into **five independent React applications** running on dedicated subdomains, all backed by a single unified Supabase database:
-
-```text
-education-erp/
-│
-├── apps/
-│   ├── director/     # Director Portal     -> director.example.uz (Port 3001)
-│   ├── admin/        # Admin Portal        -> admin.example.uz    (Port 3002)
-│   ├── teacher/      # Teacher Portal      -> teacher.example.uz  (Port 3003)
-│   ├── student/      # Student Portal      -> student.example.uz  (Port 3004)
-│   └── parent/       # Parent Portal       -> parent.example.uz   (Port 3005)
-│
-├── packages/
-│   ├── shared-auth/   # Supabase client factory, roles, permissions, cookie auth
-│   ├── shared-config/ # Subdomains, dev ports, constants, Tailwind preset
-│   ├── shared-ui/     # Design system components, headers, layouts, badges
-│   └── shared-utils/  # UZS currency formatter, Uzbekistan phone mask, date utils
-│
-└── docs/              # Comprehensive technical documentation suite
-```
+| Ilova | Domen / Subdomen | Vazifasi | Mahalliy Port |
+| :--- | :--- | :--- | :--- |
+| **`landing/`** | `sayt.uz` | **Asosiy portal:** O'quv markaz haqida ma'lumot, kurslar va Supabase `leads` jadvaliga tushadigan online qabul formasi. | 👉 [http://localhost:3000](http://localhost:3000) |
+| **`admin/`** | `admin.sayt.uz` | **Admin ERP/CRM (1 va 2-bosqich):** O'quvchilar, Guruhlar, Kurslar, O'qituvchilar, **Kunlik Davomat**, **To'lovlar & Qarzdorlar ro'yxati** va **Online arizalar (Lidlar)**. | 👉 [http://localhost:3001](http://localhost:3001) |
+| **`director/`** | `direktor.sayt.uz` | **Direktor Kabineti:** Supabase Auth orqali kirish, **Adminlarni boshqarish** (yangi admin qo'shish va o'chirish) hamda umumiy statistika monitoringi. | 👉 [http://localhost:3002](http://localhost:3002) |
 
 ---
 
-## 🚀 Quick Start
+## 🚀 2-Bosqichda Amalga Oshirilgan Yangi Funksiyalar:
 
-### Prerequisites
-- **Node.js**: v20+ or v24+
-- **npm**: v10+ or v11+
-- **Git**
+### 1. Direktor Paneli (`director/`): Adminlarni Boshqarish
+- **Supabase Auth orqali kirish:** Direktor o'z emaili va paroli bilan kabinetga kiradi.
+- **Adminlar bo'limi:**
+  - Yangi admin qo'shish (Ism, Email, Parol).
+  - Yangi admin yaratilganda (`signUp`), **direktorning o'z sessiyasi buzilmasligi uchun** `persistSession: false` qilingan vaqtinchalik Supabase mijozi orqali ro'yxatdan o'tkaziladi va `profiles` jadvaliga `role: 'admin'` qilib saqlanadi.
+  - Barcha mavjud adminlar ro'yxatini ko'rish va tizimdan o'chirish imkoniyati.
 
-### Installation
-```bash
-# Clone the repository
-git clone <repo-url> education-erp
-cd education-erp
+### 2. Admin Paneli (`admin/`): Davomat va To'lovlar
+- **Kunlik Davomat (`attendance` jadvali):**
+  - Guruh va sana (default: bugungi kun) tanlanadi.
+  - Guruhga biriktirilgan barcha o'quvchilar ro'yxati chiqadi.
+  - Har bir o'quvchi uchun **"Keldi"** (yashil) va **"Kelmadi"** (qizil) tugmalari.
+  - "Davomatni saqlash" tugmasi bosilganda real `attendance` jadvaliga yoziladi (agar shu sana uchun oldin belgilangan bo'lsa, avtomatik `upsert` bo'ladi).
+- **To'lovlar & Kassa (`payments` jadvali):**
+  - Yangi to'lov qabul qilish: O'quvchini tanlash, to'lov summasi, to'lov sanasi, qaysi oy uchunligi (masalan: `2026-11`) va izoh.
+  - To'lovlar tarixi jadvali (oy bo'yicha saralash/filter bilan).
+- **Qarzdorlar Ro'yxati (Debtors):**
+  - Tanlangan oy uchun har bir o'quvchining a'zo bo'lgan guruhlari va ularning oylik kurs narxlari hisoblanadi.
+  - Shu oyda o'quvchi to'lagan to'lovlar summasi ayirilib, to'liq to'lamagan o'quvchilar **alohida Qarzdorlar jadvalida** qizil rangda (`-Qarzdorlik miqdori`) ko'rsatiladi.
+  - Har bir qarzdor yonida bir bosishda **"To'lov qabul qilish"** tezkor tugmasi mavjud.
+- **Online Arizalar (Lidlar):**
+  - `landing` sahifasidagi arizalar to'g'ridan-to'g'ri admin panelidagi "Lidlar" bo'limiga tushadi va statusini o'zgartirish mumkin.
 
-# Install all workspace dependencies
-npm install
+---
 
-# Copy environment variables
-cp .env.example .env
-```
+## 🗄 Supabase Baza Sxemasi (SQL Editor)
 
-### Running Portals
+Ildizdagi [`supabase_schema.sql`](./supabase_schema.sql) faylini Supabase Dashboardingizning **SQL Editor** bo'limiga tashlab **"RUN"** tugmasini bosing:
+- `profiles` — Direktor va Adminlar roli (`director`, `admin`)
+- `teachers` — O'qituvchilar
+- `courses` — Kurslar va narxlar
+- `groups` — Guruhlar va dars vaqtlari
+- `students` — O'quvchilar va telefonlar
+- `enrollments` — O'quvchilarni guruhga biriktirish
+- `attendance` — Kunlik davomat jurnali
+- `payments` — To'lovlar tarixi
+- `leads` — Online arizalar
+- Xavfsiz RPC funksiya (`delete_user_by_admin`) va RLS siyosatlari.
 
-```bash
-# Run all 5 portals concurrently
-npm run dev:all
+---
 
-# Or run a specific portal:
-npm run dev:director   # http://localhost:3001
-npm run dev:admin      # http://localhost:3002
-npm run dev:teacher    # http://localhost:3003
-npm run dev:student    # http://localhost:3004
-npm run dev:parent     # http://localhost:3005
-```
-
-### Production Build
-
-Every portal is independently compiled:
-```bash
-# Build all portals
-npm run build
-
-# Or build individually
-npm run build:director
-npm run build:admin
-npm run build:teacher
-npm run build:student
-npm run build:parent
-```
-
-### Testing
+## ⚡️ Alohida Ishga Tushirish Buyruqlari:
 
 ```bash
-# Run Vitest unit tests
-npm test
+# 1. Asosiy Sayt (sayt.uz)
+cd landing && npm run dev          # http://localhost:3000
+
+# 2. Admin ERP / CRM (admin.sayt.uz)
+cd admin && npm run dev            # http://localhost:3001
+
+# 3. Direktor Kabineti (direktor.sayt.uz)
+cd director && npm run dev         # http://localhost:3002
 ```
-
----
-
-## 👥 Five User Roles & Portals
-
-1. **Director (`director.example.uz`)**: Institutional leadership, financial health oversight, administrator access management, branch governance.
-2. **Administrator (`admin.example.uz`)**: Daily operations, CRM lead intake, student enrollment, group scheduling, cashiering and tuition collection. *(No separate Accountant portal)*.
-3. **Teacher (`teacher.example.uz`)**: Assigned group management, lesson attendance journal, grading and student evaluation.
-4. **Student (`student.example.uz`)**: Personal schedule, attendance record, course syllabus, tuition balance.
-5. **Parent (`parent.example.uz`)**: Family overview, multi-child switching, real-time attendance alerts, grade tracking, tuition invoices and receipts.
-
----
-
-## 🔒 Security & Backend Architecture
-
-- **PostgreSQL Row Level Security (RLS)**: Permissions and data boundaries are enforced at the database level. Frontend route guards exist only for user navigation.
-- **Single Backend**: All portals connect to a single Supabase instance.
-- **Zero Client Secrets**: Only public anonymous keys (`VITE_SUPABASE_ANON_KEY`) are utilized in client bundles.
-- **Cross-Subdomain SSO**: Configured for top-level domain session cookies (`.example.uz`) in production with local storage fallback in development.
-
----
-
-## 📚 Technical Documentation
-
-Complete documentation is available in the `docs/` folder:
-- **Project Vision & Scope**: [`docs/project/`](docs/project/)
-- **Requirements & Roles**: [`docs/requirements/`](docs/requirements/)
-- **System & Subdomain Architecture**: [`docs/architecture/`](docs/architecture/)
-- **Database Schema & RLS**: [`docs/database/`](docs/database/)
-- **Architecture Decision Records (ADRs)**: [`docs/decisions/`](docs/decisions/)
-- **Development & Setup Guides**: [`docs/development/`](docs/development/)
